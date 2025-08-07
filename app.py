@@ -7,7 +7,7 @@ import os
 import base64
 import tempfile
 import pandas as pd
-from MixedModelDOE_Function_FollowOriginal_20250804 import run_mixed_model_doe
+from MixedModelDOE_Function_OutputToWeb_20250807 import run_mixed_model_doe_with_output
 
 app = FastAPI(
     title="Mixed Model DOE Analysis API",
@@ -57,7 +57,7 @@ async def run_doe(file: UploadFile = File(None)):
 
     # 调用 DOE 函数
     try:
-        run_mixed_model_doe(file_path=input_path, output_dir=output_dir)
+        console_output = run_mixed_model_doe_with_output(file_path=input_path, output_dir=output_dir)
     except Exception as e:
         return JSONResponse(
             status_code=500,
@@ -69,7 +69,8 @@ async def run_doe(file: UploadFile = File(None)):
         "status": "success",
         "input_file": input_path,
         "output_dir": output_dir,
-        "files": os.listdir(output_dir)
+        "files": os.listdir(output_dir),
+        "console_output": console_output  # 🆕 添加控制台输出
     }
 
 @app.get("/runDOE")
@@ -105,13 +106,14 @@ async def run_doe_json(request: DOEJsonRequest):
         output_dir = "./outputDOE"
         os.makedirs(output_dir, exist_ok=True)
         # 调用 DOE 分析
-        run_mixed_model_doe(file_path=tmp_path, output_dir=output_dir)
+        console_output = run_mixed_model_doe_with_output(file_path=tmp_path, output_dir=output_dir)
         # 返回结果
         return {
             "status": "success",
             "input_file": tmp_path,
             "output_dir": output_dir,
-            "files": os.listdir(output_dir)
+            "files": os.listdir(output_dir),
+            "console_output": console_output  # 🆕 添加控制台输出
         }
     except Exception as e:
         return JSONResponse(
@@ -158,7 +160,7 @@ async def doe_analysis(request: DoeAnalysisRequest):
         os.makedirs(output_dir, exist_ok=True)
         
         # 调用 DOE 分析
-        run_mixed_model_doe(file_path=tmp_path, output_dir=output_dir)
+        console_output = run_mixed_model_doe_with_output(file_path=tmp_path, output_dir=output_dir)
         
         # 构建响应格式，兼容 AI Foundry
         response = {
@@ -171,7 +173,8 @@ async def doe_analysis(request: DoeAnalysisRequest):
             },
             "input_file": tmp_path,
             "output_dir": output_dir,
-            "files": os.listdir(output_dir)
+            "files": os.listdir(output_dir),
+            "console_output": console_output  # 🆕 添加控制台输出
         }
         
         # 清理临时文件
