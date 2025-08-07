@@ -459,9 +459,10 @@ def run_mixed_model_doe_with_output(file_path, output_dir):
 
 # 直接运行脚本时的入口
 if __name__ == "__main__":
+    # 使用当前目录的测试数据
     console_output = run_mixed_model_doe_with_output(
-        r"C:\Zhanglei_Microsoft_Upgrade_by_20240905\Pytyon_Study_Local\Color_S2\DOEData_20250622.csv",
-        r"C:\Zhanglei_Microsoft_Upgrade_by_20240905\Pytyon_Study_Local\Color_S2\DOE_MixedModel_Outputs"
+        r"test_sample_data.csv",  # 使用当前目录的测试文件
+        r"./outputDOE"  # 输出到当前目录的outputDOE文件夹
     )
     # 在直接运行时也显示输出到终端
     print("=" * 80)

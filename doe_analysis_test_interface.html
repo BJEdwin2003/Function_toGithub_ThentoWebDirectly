@@ -138,6 +138,39 @@
             margin-top: 0;
             margin-bottom: 10px;
         }
+        .file-list {
+            margin-bottom: 15px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 5px 0;
+            background-color: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+        }
+        .download-btn {
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+        .download-btn:hover {
+            background-color: #218838;
+        }
+        .raw-data {
+            margin-top: 10px;
+        }
+        .raw-data summary {
+            cursor: pointer;
+            color: #6c757d;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -158,6 +191,7 @@
             <br>
             <button onclick="testDOEAnalysis()">🚀 运行 DOE 分析</button>
             <button onclick="testDoEAgent2Format()">🔄 测试 DoEAgent2 格式</button>
+            <button onclick="listAllFiles()">📂 浏览生成的文件</button>
         </div>
 
         <div id="results"></div>
@@ -202,7 +236,22 @@
             outputHtml += `
                     <div class="file-info">
                         <h4>📁 生成的文件：</h4>
-                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <div class="file-list">
+                            ${data.files && data.files.length > 0 ? 
+                                data.files.map(file => 
+                                    `<div class="file-item">
+                                        <span>📄 ${file}</span>
+                                        <a href="https://function-togithub-thentowebdirectly.onrender.com/download/${file}" 
+                                           target="_blank" class="download-btn">⬇️ 下载</a>
+                                    </div>`
+                                ).join('') 
+                                : '<p>没有生成文件</p>'
+                            }
+                        </div>
+                        <details class="raw-data">
+                            <summary>📋 原始API响应</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
                     </div>
                 </div>
             `;
@@ -303,6 +352,52 @@
                 document.getElementById('csvFile').files = files;
             }
         });
+
+        async function listAllFiles() {
+            showLoading();
+
+            try {
+                const response = await fetch('https://function-togithub-thentowebdirectly.onrender.com/files');
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showFileList(result);
+                } else {
+                    const errorText = await response.text();
+                    showError(`HTTP ${response.status}: ${errorText}`);
+                }
+
+            } catch (error) {
+                showError(`获取文件列表失败: ${error.message}`);
+            }
+        }
+
+        function showFileList(data) {
+            let outputHtml = `
+                <div class="results success">
+                    <h3>📂 服务器上的文件列表</h3>
+                    <p>共找到 ${data.total_files} 个文件：</p>
+            `;
+            
+            if (data.files && data.files.length > 0) {
+                outputHtml += `
+                    <div class="file-list">
+                        ${data.files.map(file => 
+                            `<div class="file-item">
+                                <span>📄 ${file}</span>
+                                <a href="https://function-togithub-thentowebdirectly.onrender.com/download/${file}" 
+                                   target="_blank" class="download-btn">⬇️ 下载</a>
+                            </div>`
+                        ).join('')}
+                    </div>
+                `;
+            } else {
+                outputHtml += `<p>${data.message || '没有找到文件'}</p>`;
+            }
+            
+            outputHtml += `</div>`;
+            document.getElementById('results').innerHTML = outputHtml;
+        }
     </script>
 </body>
 </html>

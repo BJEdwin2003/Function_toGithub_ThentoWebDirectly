@@ -1,6 +1,6 @@
 
 from fastapi import FastAPI, UploadFile, File, Body
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import os
@@ -76,6 +76,46 @@ async def run_doe(file: UploadFile = File(None)):
 @app.get("/runDOE")
 async def run_doe_get():
     return {"status": "ready"}
+
+
+# 🆕 新增：下载生成的文件
+@app.get("/download/{filename}")
+async def download_file(filename: str):
+    """
+    下载分析生成的文件
+    例如：/download/simplified_logworth.csv
+    """
+    output_dir = "./outputDOE"
+    file_path = os.path.join(output_dir, filename)
+    
+    if not os.path.exists(file_path):
+        return JSONResponse(
+            status_code=404,
+            content={"status": "error", "message": f"File {filename} not found"}
+        )
+    
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type='application/octet-stream'
+    )
+
+# 🆕 新增：列出所有可下载的文件
+@app.get("/files")
+async def list_files():
+    """
+    列出所有可下载的分析结果文件
+    """
+    output_dir = "./outputDOE"
+    if not os.path.exists(output_dir):
+        return {"files": [], "message": "No analysis results available. Run DOE analysis first."}
+    
+    files = [f for f in os.listdir(output_dir) if os.path.isfile(os.path.join(output_dir, f))]
+    return {
+        "files": files,
+        "download_urls": [f"/download/{f}" for f in files],
+        "total_files": len(files)
+    }
 
 
 # 新增：支持 JSON body 传 base64 编码的 CSV 内容
