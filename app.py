@@ -24,6 +24,14 @@ app.add_middleware(
     allow_headers=["*"],  # 允许所有请求头
 )
 
+# 根路径提供 HTML 界面
+@app.get("/")
+async def serve_html():
+    """
+    提供主 HTML 界面
+    """
+    return FileResponse("doe_analysis_test_interface.html")
+
 @app.post("/runDOE")
 async def run_doe(file: UploadFile = File(None)):
     # 处理未上传文件或空文件名的情况，返回标准 JSON 错误
