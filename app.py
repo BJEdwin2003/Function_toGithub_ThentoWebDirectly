@@ -230,3 +230,139 @@ async def doe_analysis(request: DoeAnalysisRequest):
             status_code=500,
             content={"status": "error", "message": f"DOE analysis failed: {str(e)}"}
         )
+
+
+# ===== Copilot Agent 集成 API =====
+
+# 简单的内存存储（生产环境建议使用数据库）
+analysis_storage = {}
+
+@app.post("/store_analysis")
+async def store_analysis(request: dict):
+    """
+    存储 DOE 分析结果，供 Copilot Agent 稍后调用
+    """
+    try:
+        analysis_id = request.get("analysis_id")
+        console_output = request.get("console_output")
+        timestamp = request.get("timestamp")
+        metadata = request.get("metadata", {})
+        
+        if not analysis_id or not console_output:
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "message": "Missing analysis_id or console_output"}
+            )
+        
+        # 获取当前可用文件列表
+        output_dir = "./outputDOE"
+        available_files = []
+        if os.path.exists(output_dir):
+            available_files = os.listdir(output_dir)
+        
+        # 存储分析数据
+        analysis_storage[analysis_id] = {
+            "console_output": console_output,
+            "timestamp": timestamp,
+            "metadata": metadata,
+            "files": available_files,
+            "download_base_url": "https://function-togithub-thentowebdirectly.onrender.com/download/"
+        }
+        
+        return {
+            "status": "success", 
+            "stored_id": analysis_id,
+            "files_count": len(available_files)
+        }
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": f"Failed to store analysis: {str(e)}"}
+        )
+
+
+@app.get("/get_analysis_for_copilot")
+async def get_analysis_for_copilot(analysis_id: str = None):
+    """
+    专门给 Copilot Agent 调用的接口
+    返回指定分析的结果，格式化为适合 AI 解析的文本
+    """
+    if not analysis_id:
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "message": "Missing analysis_id parameter"}
+        )
+    
+    if analysis_id not in analysis_storage:
+        return JSONResponse(
+            status_code=404,
+            content={"status": "error", "message": f"Analysis {analysis_id} not found"}
+        )
+    
+    try:
+        analysis_data = analysis_storage[analysis_id]
+        
+        # 格式化为适合 AI 分析的结构
+        formatted_response = {
+            "status": "success",
+            "analysis_id": analysis_id,
+            "analysis_text": analysis_data["console_output"],
+            "summary": extract_key_metrics(analysis_data["console_output"]),
+            "timestamp": analysis_data["timestamp"],
+            "files_available": analysis_data["files"],
+            "download_base_url": analysis_data["download_base_url"],
+            "ai_prompt_suggestion": generate_ai_prompt_suggestion(analysis_data["console_output"])
+        }
+        
+        return formatted_response
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": f"Failed to retrieve analysis: {str(e)}"}
+        )
+
+
+def extract_key_metrics(console_output: str) -> dict:
+    """
+    从控制台输出中提取关键指标
+    """
+    try:
+        summary = {
+            "model_found": "Mixed Model" in console_output,
+            "logworth_analysis": "LogWorth" in console_output,
+            "r_squared": None,
+            "significant_effects": []
+        }
+        
+        # 简单的关键词提取
+        lines = console_output.split('\n')
+        for line in lines:
+            if "R-squared" in line or "R²" in line:
+                # 尝试提取 R-squared 值
+                import re
+                r_match = re.search(r'(\d+\.\d+)', line)
+                if r_match:
+                    summary["r_squared"] = float(r_match.group(1))
+        
+        return summary
+        
+    except Exception:
+        return {"extraction_error": "Failed to parse console output"}
+
+
+def generate_ai_prompt_suggestion(console_output: str) -> str:
+    """
+    为 AI 生成分析提示建议
+    """
+    return f"""这是一个 DOE (Design of Experiments) 混合模型分析结果。请帮我分析以下内容：
+
+1. 📊 模型拟合质量如何？
+2. 🔍 哪些因子具有统计显著性？
+3. 📈 LogWorth 值的解读和排序
+4. 💡 基于结果的工艺优化建议
+5. ⚠️ 是否有需要关注的异常或警告？
+
+分析结果：
+{console_output[:2000]}{'...(内容截断)' if len(console_output) > 2000 else ''}"""
