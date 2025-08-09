@@ -1,0 +1,138 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "DOE Analysis API for Copilot Agent",
+    "description": "API for retrieving DOE analysis results stored by the web interface",
+    "version": "1.0.0"
+  },
+  "host": "function-togithub-thentowebdirectly.onrender.com",
+  "schemes": ["https"],
+  "produces": ["application/json"],
+  "paths": {
+    "/get_analysis_for_copilot": {
+      "get": {
+        "summary": "Get DOE analysis results for Copilot Agent",
+        "description": "Retrieves stored DOE analysis results using analysis ID",
+        "operationId": "getAnalysisForCopilot",
+        "parameters": [
+          {
+            "name": "analysis_id",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The unique identifier for the DOE analysis results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analysis results retrieved successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "description": "Whether the request was successful"
+                },
+                "analysis_id": {
+                  "type": "string",
+                  "description": "The analysis identifier"
+                },
+                "console_output": {
+                  "type": "string",
+                  "description": "The detailed DOE analysis results"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the analysis was stored"
+                },
+                "metadata": {
+                  "type": "object",
+                  "description": "Additional metadata about the analysis"
+                },
+                "key_metrics": {
+                  "type": "object",
+                  "description": "Extracted key metrics from the analysis",
+                  "properties": {
+                    "r_squared_values": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    "significant_factors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "model_statistics": {
+                      "type": "object"
+                    }
+                  }
+                },
+                "ai_prompt_suggestion": {
+                  "type": "string",
+                  "description": "AI-generated prompt suggestion for analysis interpretation"
+                }
+              }
+            },
+            "examples": {
+              "application/json": {
+                "success": true,
+                "analysis_id": "1723123456789",
+                "console_output": "Mixed Model DOE Analysis Results\n\nModel Summary for Lvalue:\nR-squared: 0.85\nSignificant factors: dye1, Time...",
+                "timestamp": "2024-08-08T10:30:00Z",
+                "key_metrics": {
+                  "r_squared_values": [0.85, 0.72, 0.91],
+                  "significant_factors": ["dye1", "Time", "dye2"]
+                },
+                "ai_prompt_suggestion": "Please analyze these DOE results focusing on the significant factors and R-squared values..."
+              }
+            }
+          },
+          "404": {
+            "description": "Analysis not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "error": {
+                  "type": "string"
+                }
+              }
+            },
+            "examples": {
+              "application/json": {
+                "success": false,
+                "error": "Analysis not found"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid analysis ID format",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "error": {
+                  "type": "string"
+                }
+              }
+            },
+            "examples": {
+              "application/json": {
+                "success": false,
+                "error": "Invalid analysis_id format"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
