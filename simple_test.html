@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOE Analysis - Simple Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .upload-area { border: 2px dashed #007bff; padding: 20px; text-align: center; margin: 20px 0; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .results { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        pre { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔬 DOE Analysis - Simple Test Interface</h1>
+    
+    <div class="upload-area">
+        <input type="file" id="csvFile" accept=".csv" />
+        <br><br>
+        <button onclick="testDOE()">🚀 Test DOE Analysis</button>
+        <button onclick="testStatus()">🔍 Test API Status</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        async function testStatus() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Testing API status...</p>';
+            
+            try {
+                const response = await fetch('https://function-togithub-thentowebdirectly.onrender.com/runDOE');
+                const data = await response.json();
+                results.innerHTML = `
+                    <div class="results">
+                        <h3>✅ API Status Test</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="results">
+                        <h3>❌ API Error</h3>
+                        <pre>Error: ${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testDOE() {
+            const fileInput = document.getElementById('csvFile');
+            const results = document.getElementById('results');
+            
+            if (!fileInput.files[0]) {
+                results.innerHTML = '<div class="results"><h3>⚠️ Please select a CSV file first</h3></div>';
+                return;
+            }
+
+            results.innerHTML = '<p>Running DOE analysis...</p>';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+
+                const response = await fetch('https://function-togithub-thentowebdirectly.onrender.com/runDOE', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    results.innerHTML = `
+                        <div class="results">
+                            <h3>✅ DOE Analysis Complete</h3>
+                            <h4>Console Output:</h4>
+                            <pre>${data.console_output || 'No console output available'}</pre>
+                            <h4>Generated Files:</h4>
+                            <pre>${JSON.stringify(data.files || [], null, 2)}</pre>
+                            
+                            <!-- AI Integration Buttons -->
+                            <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+                                <h4>🤖 AI Analysis Options:</h4>
+                                <button onclick="copyForAI()" style="background: #6f42c1;">🤖 Copy for AI Analysis</button>
+                                <button onclick="showAIGuide()" style="background: #28a745;">💡 AI Guide</button>
+                                <small style="display: block; margin-top: 10px; color: #666;">
+                                    Copy analysis results and paste to ChatGPT, Claude, or other AI services for interpretation
+                                </small>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const errorData = await response.json();
+                    results.innerHTML = `
+                        <div class="results">
+                            <h3>❌ Analysis Failed</h3>
+                            <pre>${JSON.stringify(errorData, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="results">
+                        <h3>❌ Error</h3>
+                        <pre>Error: ${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        function copyForAI() {
+            const consoleOutput = document.querySelector('pre').textContent;
+            const aiPrompt = `请分析以下DOE（实验设计）统计结果，并提供详细解释：
+
+${consoleOutput}
+
+请重点分析：
+1. 各响应变量的R-squared值及其意义
+2. 显著性因子的识别和影响
+3. 模型的统计质量评估
+4. 实际应用建议和优化方向
+5. Lab色彩空间中的实际意义（如果适用）`;
+
+            navigator.clipboard.writeText(aiPrompt).then(() => {
+                alert('✅ Analysis results copied to clipboard!\\n\\nPaste into ChatGPT, Claude, or other AI services for professional interpretation.');
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                prompt('Copy the following text for AI analysis:', aiPrompt);
+            });
+        }
+
+        function showAIGuide() {
+            alert(`🤖 AI Analysis Guide
+
+Recommended AI Services:
+• ChatGPT (https://chat.openai.com)
+• Claude (https://claude.ai)
+• Microsoft Copilot (https://copilot.microsoft.com)
+
+How to use:
+1. Run DOE analysis and click "Copy for AI Analysis"
+2. Open your preferred AI service
+3. Paste the copied content
+4. Get professional DOE results interpretation
+
+AI will provide:
+✓ Statistical metrics interpretation
+✓ Significant factor analysis
+✓ Model quality assessment
+✓ Practical application recommendations
+✓ Optimization guidance`);
+        }
+    </script>
+</body>
+</html>
