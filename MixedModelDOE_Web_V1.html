@@ -347,6 +347,39 @@
             border-color: #0e700e;
         }
         
+        .copy-btn {
+            background-color: #0078d4;
+            border: 1px solid #0078d4;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 2px;
+            font-size: 14px;
+            font-weight: 400;
+            transition: background-color 0.1s ease;
+            margin: 16px 0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 200px;
+        }
+        
+        .copy-btn:hover {
+            background-color: #106ebe;
+            border-color: #106ebe;
+        }
+        
+        .copy-btn:active {
+            background-color: #005a9e;
+            border-color: #005a9e;
+        }
+        
+        .copy-success {
+            background-color: #107c10 !important;
+            border-color: #107c10 !important;
+        }
+        
         @media (max-width: 768px) {
             .content {
                 padding: 16px;
@@ -504,9 +537,10 @@
             let html = `
                 <div class="results success">
                     <h3>Analysis Completed Successfully</h3>
+                    <button onclick="copyResultsToClipboard()" class="copy-btn" id="copyBtn">📋 Copy Results to Clipboard (for Copilot Chat)</button>
                     <div class="files-section">
                         <h4>Console Output</h4>
-                        <pre>${data.console_output || 'No console output available'}</pre>
+                        <pre id="consoleOutput">${data.console_output || 'No console output available'}</pre>
                         <h4>Generated Files</h4>
                         <div>
             `;
@@ -532,6 +566,43 @@
             `;
             
             document.getElementById('results').innerHTML = html;
+        }
+        
+        async function copyResultsToClipboard() {
+            try {
+                const consoleOutput = document.getElementById('consoleOutput');
+                if (!consoleOutput) {
+                    alert('No analysis results found! Please run DOE analysis first.');
+                    return;
+                }
+                
+                const resultText = consoleOutput.textContent;
+                
+                // Format results for easy pasting to Copilot Chat
+                const formattedText = `DOE Analysis Results:
+
+${resultText}
+
+---
+Please help me interpret the main findings and recommendations from this DOE statistical analysis.`;
+                
+                await navigator.clipboard.writeText(formattedText);
+                
+                // Button feedback
+                const copyBtn = document.getElementById('copyBtn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ Copied! Now you can paste to Copilot Chat';
+                copyBtn.classList.add('copy-success');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.classList.remove('copy-success');
+                }, 3000);
+                
+            } catch (err) {
+                console.error('Copy failed:', err);
+                alert('Copy failed! Please manually select and copy the text.');
+            }
         }
     </script>
 </body>
