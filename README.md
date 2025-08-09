@@ -519,6 +519,32 @@ HTML界面执行DOE → 存储结果 → Copilot Agent读取 → 智能解释给
 
 ---
 
+## 📦 数据流与功能分工说明（2025年8月补充）
+
+### 1. 前端上传与API接收
+- 用户在网页（如 doe_analysis_test_interface.html）上传CSV文件。
+- 前端可直接上传CSV，也可用Base64编码后上传（如AI Agent场景）。
+
+### 2. app.py的处理逻辑
+- 如果是普通文件上传，app.py直接保存CSV到临时目录。
+- 如果是Base64字符串上传（如AI Agent），app.py会先用Base64解码，还原为CSV文件。
+- app.py不会做统计分析，只负责文件接收、解码和调度。
+
+### 3. Base64转换工具
+- csv_to_base64_converter.py 仅用于将CSV转为Base64字符串，便于API或AI Agent传输。
+- 解码过程发生在app.py，不在分析核心代码里。
+
+### 4. 核心分析流程
+- app.py调用 MixedModelDOE_Function_OutputToWeb_20250807.py 的 run_mixed_model_doe_with_output。
+- 该函数只处理标准CSV文件（已解码），用 pandas 读取数据，进行DOE分析。
+- 分析结果（控制台输出和各类CSV文件）会保存到指定目录，并返回给前端或API调用者。
+
+### 5. 总结
+- Base64编码/解码仅用于数据传输环节，分析核心只处理标准CSV。
+- Web和AI Agent均可用，数据流清晰分工，便于维护和扩展。
+
+---
+
 **当前版本**: v1.1.0 (Web Direct)  
 **最后更新**: 2025年8月  
 **维护状态**: 🟢 活跃开发中
